@@ -1,0 +1,135 @@
+---
+title: "Portfolio Project1"
+author: "Huan Xu"
+date: "2/20/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Ranking U.S. academic institutions by their open-source contributions
+
+csrankings.org is a well-known site that ranks the CS department of U.S. academic institutions 
+by their contributions to the academia. It considers factors like the total citation count from 
+an institution's CS faculty body, and the number of power individuals who made major contributions 
+to specific fields of Computer Sciences.
+As the cradle of many impactful open-source projects, GitHub is a also a place for programmers
+to make contributions and push the frontier of Computer Sciences. However, there is yet a report on
+how much each U.S. academic institution contributed in this race.
+
+To the end of building such a report, this portfolio project used Google Big Query to extract
+history committer information whose email ends with ".edu", and ranks U.S. academic
+institutions by their open-source contribution.
+
+## Transform data into tidy format
+
+Based on the observation that information about which institution an email belongs to is located
+at the left of the ".edu" suffix. I used regular expression and tidyr's extract function to pull 
+this information and put them into the new column, "institution".
+
+```{r}
+library(tidyr)
+library(readr)
+# data can also be downloaded here: https://drive.google.com/file/d/1xDClwr3HyI4BAlX9KWsHL2MWbM1BYxDT/view?usp=sharing
+commits <- read_csv("https://dl.dropboxusercontent.com/s/61vrfnyc6ddijuc/bq-results-20220210-012020-2529sugofmkh.csv")
+commits$institution <- extract(commits, email, into = c("institution"), "@(?:.*\\.)*(.*)\\.edu$")$institution
+head(commits)
+```
+## Aggregate data by institution column
+
+To rank institutions by total commits from committers, we need to first aggregate the data 
+by institutions and use sum() to calculate the sum of commits from their committers.
+
+```{r}
+library(dplyr)
+commits_by_institution <- commits %>% 
+  group_by(institution) %>%
+  summarize(sum_commit = sum(num_commit),
+            num_committer = n(),
+            commit_per_committer = sum_commit / num_committer) %>%
+  drop_na() %>%
+  slice_max(order_by = sum_commit, n = 50)
+head(commits_by_institution)
+```
+
+## Plot 1: Rank institutions by the accumulated number of commits they made
+
+About this graph: 
+For this bar plot, I made 3 design choices to more clearly present the information.
+1) I filtered for top 50 institutions ordered by the total number of commits to selectively display
+more relevant information.
+2) I ranked the y axis by the total number of commits to encode more information.
+3) I filled each bar with colors related to the number of commit per committer to represent
+how "active" a school is for open-source projects on GitHub.
+
+Insight: 
+The higher a school is on the list, the more total contribution it has made. 
+Hence, we can conclude that schools like MIT, Stanford, Berkeley, UMich, and WISC 
+are some of the most celebrated institutions throughout GitHub.
+
+The darker a school's color is, the more active it is for open-source projects.
+Hence, we can conclude that schools like Utath, WUSTL, PSC, and KU are some of the most
+activce institutions throughout GitHub. (WISC is also very active!)
+
+Unexpected things:
+WISC is ranked higher than CMU. Score 1 for badgers.
+```{r rank, echo=FALSE}
+library(ggplot2)
+commits_by_institution$group<-cut(commits_by_institution$commit_per_committer, 
+                                  breaks = c(0,50,80,100,150,200,800))
+ggplot(commits_by_institution) +
+   geom_bar(
+     aes(sum_commit, reorder(institution, sum_commit), fill = group),
+     width = 1, stat = "identity"
+   ) +
+  scale_fill_brewer(palette = "YlOrRd") +
+   scale_x_continuous(label = scales::label_number_si(), expand = c(0, 0, 0.1, 0.1)) + # remove scientific notation. scales::comma() is also useful.
+   labs(x = "Accumulated GitHub commits", y = "Institution", fill = "Commit per committer") +
+   theme(
+     axis.text.y = element_text(size = 6),
+     axis.ticks = element_blank(),
+     panel.grid.major.y = element_blank()
+   )
+```
+
+## Plot 2: Power committer from UW-Madison
+
+About this graph: 
+For this bar plot, I made 2 design choices to more clearly present the information.
+1) I filtered for top 50 committers ordered by the total number of commits to selectively display
+more relevant information.
+2) I ranked the y axis by the number of commits to encode more information.
+
+Insight: 
+May I acknowledge the fictional GitHub Award winners to the following badgers: 
+1st place, Curtis Rueden.
+2nd place, Radu Serban.
+3rd place, Jaime Frey.
+👏👏👏👏
+
+Unexpected things:
+Huge respect to Curtis Rueden, who had 16,844 commits on GitHub, more than 20% of
+total commits from WISC.
+```{r wisc, echo=FALSE}
+commiters_from_madison <- commits %>%
+  filter(institution == 'wisc') %>%
+  group_by(name) %>%
+  summarise(num_commit = sum(num_commit)) %>%
+  slice_max(order_by = num_commit, n = 50)
+
+ggplot(commiters_from_madison) +
+   geom_bar(
+     aes(num_commit, reorder(name, num_commit)),
+     width = 1, stat = "identity"
+   ) +
+   scale_x_continuous(label = scales::label_number_si(), expand = c(0, 0, 0.1, 0.1)) + # remove scientific notation. scales::comma() is also useful.
+   labs(x = "Number of GitHub commits", y = "Name") +
+   theme(
+     axis.text.y = element_text(size = 6),
+     axis.ticks = element_blank(),
+     panel.grid.major.y = element_blank()
+   )
+```
