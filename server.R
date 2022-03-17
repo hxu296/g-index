@@ -7,7 +7,7 @@ library(ggplot2)
 
 # Fetch and preprocess data
 #commits <- read_csv("https://dl.dropboxusercontent.com/s/b8cxtb63ed65cyp/bq-results-20220313-174259-48iohc32usq1.csv")
-commits <- read_csv("bq-results-20220313-174259-48iohc32usq1.csv")
+commits <- read_csv("data/bq-results-20220313-174259-48iohc32usq1.csv")
 commits$institution <- extract(commits, email, into = c("institution"), "@(?:.*\\.)*(.*)\\.edu$")$institution
 
 commits_by_committer <- commits %>% 
