@@ -5,23 +5,10 @@ library(dplyr)
 library(ggplot2)
 
 
-# Fetch and preprocess data
-#commits <- read_csv("https://dl.dropboxusercontent.com/s/b8cxtb63ed65cyp/bq-results-20220313-174259-48iohc32usq1.csv")
-commits <- read_csv("data/bq-results-20220313-174259-48iohc32usq1.csv")
-commits$institution <- extract(commits, email, into = c("institution"), "@(?:.*\\.)*(.*)\\.edu$")$institution
-
-commits_by_committer <- commits %>% 
-  group_by(name, email, institution) %>%
-  summarize(committer_commit = sum(num_commits))
-
-commits_by_institution <- commits_by_committer  %>%
-  group_by(institution) %>%
-  summarize(institution_commit = sum(committer_commit),
-            num_committer = n(),
-            commit_per_committer = institution_commit / num_committer) %>%
-  drop_na() %>%
-  slice_max(order_by = institution_commit, n = 30)
-
+# Load preprocessed data
+commits <- read_csv("data/commits.csv")
+commits_by_committer <- read_csv("data/commits_by_committer.csv")
+commits_by_institution <- read_csv("data/commits_by_institutions.csv")
 
 # Bar plot for the general ranking
 barplot_institution <- function(commits_by_institution){
@@ -39,7 +26,7 @@ barplot_institution <- function(commits_by_institution){
          y = "Institution",
          fill = "Commit per committer") +
     theme(
-      axis.text.y = element_text(size = 6),
+      text = element_text(size = 18),
       axis.ticks = element_blank(),
       panel.grid.major.y = element_blank()
     )
@@ -62,7 +49,8 @@ pieplot_committer <- function(selected_institution, commits_by_committer, commit
          x = NULL, 
          y = NULL) +
     theme_classic() +
-    theme(axis.line = element_blank(),
+    theme(text = element_text(size = 18),
+          axis.line = element_blank(),
           axis.text = element_blank(),
           axis.ticks = element_blank()) +
     scale_fill_brewer(palette="Blues")
@@ -87,7 +75,7 @@ barplot_repo <- function(selected_institution, commits){
          x = "Number of GitHub commits", 
          y = "Repo") +
     theme(
-      axis.text.y = element_text(size = 6),
+      text = element_text(size = 18),
       axis.ticks = element_blank(),
       panel.grid.major.y = element_blank()
     )
