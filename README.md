@@ -1,4 +1,4 @@
-# GitHub-Based University Ranking (g-index)
+# University Ranking By GitHub Contribution
 
 ## About
 
