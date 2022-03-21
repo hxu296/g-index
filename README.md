@@ -6,7 +6,7 @@ We propose g-index (GitHub index) to rank US universities according to their ope
 
 ![image webpage](./asset/webpage.png)
 
-## TOP 30 U.S. Academic Institutions
+## TOP 30 U.S. Academic Institutions by GitHub Commits (2022/3)
 1. mit
 2. stanford
 3. berkeley
