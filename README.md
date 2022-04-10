@@ -1,14 +1,12 @@
-# GitHub-Based University Ranking (g-index)
-
-## About
-
-We propose g-index (GitHub index) to rank US universities according to their open source contributions. Data is gathered using Google Big Query's public data warehouse "github-repos" and updated monthly.
+# University Ranking By GitHub Contribution
 
 Website: https://hxu296.shinyapps.io/g-index/
 
+We propose g-index (GitHub index) to rank US universities according to their open source contributions. Data is gathered using Google Big Query's public data warehouse "github-repos" and updated monthly.
+
 ![image webpage](./asset/webpage.png)
 
-## TOP 30 U.S. Academic Institutions
+## TOP 30 U.S. Academic Institutions by GitHub Commits (2022/3)
 1. mit
 2. stanford
 3. berkeley
