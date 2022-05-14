@@ -31,7 +31,7 @@ barplot_institution <- function(commits_by_institution){
       axis.text.y = element_text(),
       axis.ticks = element_blank(),
       panel.grid.major.y = element_blank(),
-      plot.title = element_text(hjust = 0.5, size=15)
+      plot.title = element_text(hjust = 0.5, size=20)
     )
 }
 
@@ -63,7 +63,7 @@ pieplot_committer <- function(selected_institution, commits_by_committer, commit
     theme(axis.line = element_blank(),
           axis.text = element_blank(),
           axis.ticks = element_blank(),
-          plot.title = element_text(hjust = 0.5, size=15)
+          plot.title = element_text(hjust = 0.5, size=20)
           )
 }
 
@@ -90,7 +90,7 @@ barplot_repo <- function(selected_institution, commits){
       axis.text.y = element_text(),
       axis.ticks = element_blank(),
       panel.grid.major.y = element_blank(),
-      plot.title = element_text(hjust = 0.5, size=15)
+      plot.title = element_text(hjust = 0.5, size=20)
     )
 }
 
@@ -99,7 +99,7 @@ network_institution <- function(selected_institution){
   institution_network <- network %>%
     group_by(src_institution, dst_institution) %>%
     summarize(value=n()) %>%
-    filter(src_institution != dst_institution & value > 50)
+    filter(src_institution != dst_institution & value > 20)
   
   E <- data.frame(
     source = institution_network$src_institution,
@@ -122,18 +122,19 @@ network_institution <- function(selected_institution){
     scale_color_identity() +
     guides(edge_width = FALSE) + 
     ggtitle(paste("Connections Between Academic Institutions: Highlighting ", selected_institution, sep ="")) + 
-    theme(plot.title = element_text(hjust = 0.5, size=15))
+    theme(plot.title = element_text(hjust = 0.5, size=20))
 }
 
 
 # Define UI 
 ui <- fluidPage(
-    h3("Personal Portfolio: Github and Universities"),
+    h1("University Ranking By Github Contribution"),
+    h5("initial loading may take a few seconds"),
     plotOutput("rankingBarPlot", click = "rankBarClick"),
     plotOutput("institution_network", width = "100%", height = "600px"),
     fluidRow(
-      column(6, plotOutput("repoBarPlot")),
-      column(6, plotOutput("committerPiePlot"))
+      column(7, plotOutput("repoBarPlot")),
+      column(5, plotOutput("committerPiePlot"))
     ),
 )
 
@@ -156,3 +157,4 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
