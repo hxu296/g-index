@@ -6,7 +6,40 @@ from github import Github
 from tqdm import tqdm
 
 # using an access token
-g = Github("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")
+g = Github("access_token")
+
+def get_committer_network(commits, commits_by_committer, allow_loose_connection=False):
+    """
+    Return the connection between committers
+    Two committers are said to be connected if they've contributed to the same repository
+    :param allow_loose_connection: False -> use full repo_name; True -> use short repo_name
+    """
+    # construct a hashmap from committer to number of commits
+    commits_by_committer_dict = {}
+    for _, row in commits_by_committer.iterrows():
+        committer = (row["name"], row["institution"], row["email"])
+        commits_by_committer_dict[committer] = row["committer_commit"]
+
+    # construct a hashmap from repositories to committers (key: repo_name, value: set of committers)
+    repos_committers = {}
+    for _, row in commits.iterrows():
+        committer = (row["name"], row["institution"], row["num_commits"], commits_by_committer_dict[(row["name"], row["institution"], row["email"])])
+        repo_name = row["repo_name"].split("/")[1] if allow_loose_connection else row["repo_name"]
+        if repo_name not in repos_committers:
+            repos_committers[repo_name] = set()
+        repos_committers[repo_name].add(committer)
+    # construct network from committers to another committer
+    network = []
+    for _, row in commits.iterrows():
+        committer = (row["name"], row["institution"], row["num_commits"], commits_by_committer_dict[(row["name"], row["institution"], row["email"])])
+        repo_name = row["repo_name"].split("/")[1] if allow_loose_connection else row["repo_name"]
+        for other_committer in repos_committers[repo_name]:
+            if committer != other_committer and committer[2] > 10 and other_committer[2] > 10:
+                network.append((committer[0], committer[1], committer[2], committer[3], other_committer[0], other_committer[1], other_committer[2], other_committer[3]))
+    # remove duplicates
+    network = list(set(network)) 
+    print('dicovered {} connections'.format(len(network)))
+    return network
 
 def get_repos_info(repos_names):
     """
@@ -81,11 +114,12 @@ def main():
 def test():
     # read commits from data/commits.csv
     commits = pd.read_csv("data/commits.csv")
-    # gather repo_name into a set
-    repos_full_names = set(commits["repo_name"])
-    # exclude user name from repos_name
-    repos_short_names = set([repo_name.split("/")[1] for repo_name in repos_full_names])
-    print(len(repos_full_names), len(repos_short_names))
+    commits_by_committer = pd.read_csv("data/commits_by_committer.csv")
+    network = get_committer_network(commits, commits_by_committer)
+    # convert netowrk to a dataframe
+    network_df = pd.DataFrame(network)
+    # save network to disk
+    network_df.to_csv("data/network.csv", index=False)
 
 if __name__ == '__main__':
-    main()
+    test()
